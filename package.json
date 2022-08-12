@@ -1,0 +1,19 @@
+{
+  "name": "duplicatefilescanner",
+  "version": "1.0.0",
+  "description": "Utility to find duplicate files in folder",
+  "main": "index.js",
+  "scripts": {
+    "build": "npx tsc index.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "jones joseph",
+  "license": "ISC",
+  "dependencies": {
+    "minimist": "^1.2.6"
+  },
+  "devDependencies": {
+    "@types/node": "^18.6.4",
+    "typescript": "^4.7.4"
+  }
+}
