@@ -2,17 +2,21 @@
   "name": "duplicatefilescanner",
   "version": "1.0.0",
   "description": "Utility to find duplicate files in folder",
-  "main": "index.js",
+  "main": "index.ts",
   "scripts": {
-    "build": "npx tsc index.ts",
+    "compile": "npx tsc index.ts --outDir \"./tsout/\"",
+    "start": "npm run compile && node ./tsout/index.js",
+    "make":"npm run compile && pkg ./tsout/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "jones joseph",
   "license": "ISC",
   "dependencies": {
-    "minimist": "^1.2.6"
+    "minimist": "^1.2.6",
+    "rxjs": "^7.5.6"
   },
   "devDependencies": {
+    "@types/minimist": "^1.2.2",
     "@types/node": "^18.6.4",
     "typescript": "^4.7.4"
   }
