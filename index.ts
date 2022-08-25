@@ -4,6 +4,7 @@ import { IConsoleParams } from './src/interface/consoleParams';
 import { DuplicateFileProcessor } from './src/core';
 import { ExecutionType } from './src/interface/ProcessiongOptions';
 import { IExecutionEvent } from './src/interface/executionInfo';
+import { IDuplicateFileProcessor } from './src/interface/duplicateFileProcessor';
 
 // get arguments
 var params: IConsoleParams = minimist((process.argv.slice(2)));
@@ -11,7 +12,7 @@ params.dir = 'C:/Users/ra4272/Downloads';
 if (params.dir) {
 
   try {
-    let duplicateFileProcessor = new DuplicateFileProcessor(params.dir);
+    let duplicateFileProcessor: IDuplicateFileProcessor = new DuplicateFileProcessor(params.dir);
     duplicateFileProcessor.getScanProgressEvent().subscribe({
       next: writeDuplicateInfo,
       complete: () => { fileScanningComplete(duplicateFileProcessor); }
@@ -36,7 +37,7 @@ function writeDuplicateInfo(duplicateInfo: IDuplicateInfo, overwrite: boolean = 
   process.stdout.write(`Files scanned: ${duplicateInfo.fileCurrentCount}/${duplicateInfo.fileTotalCount} | Unique Files: ${duplicateInfo.fileGroupCount} | Duplicates found: ${duplicateInfo.duplicatesCount}`);
 }
 
-function fileScanningComplete(duplicateFileProcessor: DuplicateFileProcessor) {
+function fileScanningComplete(duplicateFileProcessor: IDuplicateFileProcessor) {
   writeDuplicateInfo(duplicateFileProcessor.getDuplicateInfo());
   console.log('\nAll files scanned\n');
 
@@ -59,7 +60,7 @@ function writeExecutionInfo(event: IExecutionEvent, overwrite: boolean = true) {
   }
 }
 
-function fileExecutionComplete(duplicateFileProcessor: DuplicateFileProcessor) {
+function fileExecutionComplete(duplicateFileProcessor: IDuplicateFileProcessor) {
   writeExecutionInfo({
     data: duplicateFileProcessor.getExecutionInfo(),
     success: true
@@ -68,7 +69,7 @@ function fileExecutionComplete(duplicateFileProcessor: DuplicateFileProcessor) {
   console.log('\nExecution completed\n');
 }
 
-function listFileGroups(duplicateFileProcessor: DuplicateFileProcessor) {
+function listFileGroups(duplicateFileProcessor: IDuplicateFileProcessor) {
   let i = 1;
   console.log('\n\nFile Groups:');
   duplicateFileProcessor.getFileGroups().forEach(files => {

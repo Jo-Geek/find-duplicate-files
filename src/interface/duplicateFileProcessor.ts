@@ -1,15 +1,16 @@
 import { Observable } from "rxjs";
 import { IDuplicateInfo } from "./duplicateInfo";
-import { IExecutionInfo } from "./executionInfo";
+import { IExecutionEvent, IExecutionInfo } from "./executionInfo";
 import { ExecutionType, IProcessingOptions } from "./ProcessiongOptions";
 
-export interface IDuplicateFileProcesssor {
+export interface IDuplicateFileProcessor {
     getFileGroups(): string[][];
     getUniqueFiles(): string[];
     getDuplicateFiles(): string[];
     getDuplicateInfo(): IDuplicateInfo;
     getExecutionInfo(): IExecutionInfo;
     getScanProgressEvent(): Observable<IDuplicateInfo>;
+    getExecutionProgressEvent(): Observable<IExecutionEvent>;
     getExecutionType(): ExecutionType;
     getExecutionDirectory(): string;
 

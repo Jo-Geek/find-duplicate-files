@@ -3,14 +3,14 @@ import * as path from 'path';
 import * as crypto from 'crypto';
 import * as fse from 'fs-extra';
 import { Observable, Subject, Subscriber } from "rxjs";
-import { IDuplicateFileProcesssor } from "./interface/duplicateFileProcessor";
+import { IDuplicateFileProcessor } from "./interface/duplicateFileProcessor";
 import { IDuplicateInfo } from "./interface/duplicateInfo";
 import { ExecutionType, IProcessingOptions } from "./interface/ProcessiongOptions";
 import { IExecutionEvent, IExecutionInfo } from './interface/executionInfo';
 
 
 
-export class DuplicateFileProcessor implements IDuplicateFileProcesssor {
+export class DuplicateFileProcessor implements IDuplicateFileProcessor {
     private duplicateInfo: IDuplicateInfo;
     private executionInfo: IExecutionInfo;
     private scanProgressObservable: Observable<IDuplicateInfo>;
