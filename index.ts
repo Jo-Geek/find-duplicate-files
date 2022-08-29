@@ -6,11 +6,11 @@ import { ExecutionType } from './src/interface/ProcessiongOptions';
 import { IExecutionEvent } from './src/interface/executionInfo';
 import { IDuplicateFileProcessor } from './src/interface/duplicateFileProcessor';
 
-// get arguments
+// get cli arguments
 var params: IConsoleParams = minimist((process.argv.slice(2)));
-params.dir = 'C:/Users/ra4272/Downloads';
+// To debug
+//params.dir = 'C:/Users/xxxxx/Downloads';
 if (params.dir) {
-
   try {
     let duplicateFileProcessor: IDuplicateFileProcessor = new DuplicateFileProcessor(params.dir);
     duplicateFileProcessor.getScanProgressEvent().subscribe({
@@ -46,26 +46,21 @@ function fileScanningComplete(duplicateFileProcessor: IDuplicateFileProcessor) {
   }
 
   if (params.execute) {
-    console.log(`\nExecuting operation: ${ExecutionType[duplicateFileProcessor.getExecutionType()]}`);
-    duplicateFileProcessor.startExecution();
+    if (duplicateFileProcessor.getDuplicateFiles().length > 0) {
+      console.log(`\nExecuting operation: ${ExecutionType[duplicateFileProcessor.getExecutionType()]}`);
+      duplicateFileProcessor.startExecution();
+    } else {
+      console.log('No duplicate files found to process');
+    }
   }
 }
 
-function writeExecutionInfo(event: IExecutionEvent, overwrite: boolean = true) {
-  if (event.success) {
-    overwrite && process.stdout.cursorTo(0);
-    process.stdout.write(`Processing: ${event.data.fileCurrentCount}/${event.data.fileTotalCount} | File: ${event.data.fileCurrentName}`);
-  } else {
-    console.log(`Execution failed for file: ${event.data.fileCurrentName}`);
-  }
+function writeExecutionInfo(event: IExecutionEvent) {
+  console.log(`[${padZeros(event.data.fileCurrentCount, event.data.fileTotalCount)}/${event.data.fileTotalCount}]\t${event.success ? 'DONE' : 'FAIL'}\t${event.data.fileCurrentName}`);
+
 }
 
 function fileExecutionComplete(duplicateFileProcessor: IDuplicateFileProcessor) {
-  writeExecutionInfo({
-    data: duplicateFileProcessor.getExecutionInfo(),
-    success: true
-  });
-
   console.log('\nExecution completed\n');
 }
 
@@ -81,4 +76,8 @@ function listFileGroups(duplicateFileProcessor: IDuplicateFileProcessor) {
     }
     i++;
   });
+}
+
+function padZeros(source: number, target: number): string {
+  return `${source}`.padStart(`${target}`.length, `0`);
 }

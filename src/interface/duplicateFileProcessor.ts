@@ -19,4 +19,6 @@ export interface IDuplicateFileProcessor {
 
     startScan(): void;
     startExecution(): void;
+
+    isScanComplete(): boolean;
 }

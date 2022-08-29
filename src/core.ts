@@ -7,8 +7,10 @@ import { IDuplicateFileProcessor } from "./interface/duplicateFileProcessor";
 import { IDuplicateInfo } from "./interface/duplicateInfo";
 import { ExecutionType, IProcessingOptions } from "./interface/ProcessiongOptions";
 import { IExecutionEvent, IExecutionInfo } from './interface/executionInfo';
+import { IFileInfo } from './interface/fileInfo';
 
-
+// MB * bytes
+const maxFileSize = 500 * 1024000;
 
 export class DuplicateFileProcessor implements IDuplicateFileProcessor {
     private duplicateInfo: IDuplicateInfo;
@@ -17,18 +19,18 @@ export class DuplicateFileProcessor implements IDuplicateFileProcessor {
     private scanProgressSubscriber?: Subscriber<IDuplicateInfo>;
     private executionProgressObservable: Observable<IExecutionEvent>;
     private executionProgressSubscriber?: Subscriber<IExecutionEvent>;
-    private filesList: string[];
+    private filesList: IFileInfo[];
     private uniqueFiles: string[];
     private duplicateFiles: string[];
     private fileHashMap: any;
     private processingOptions: IProcessingOptions;
-    private isScanComplete: boolean;
+    private _isScanComplete: boolean;
 
     constructor(dir: string) {
         this.processingOptions = {
             scanDirectory: dir,
             executionType: ExecutionType.move,
-            executionDirectory: path.join(dir, '/duplicates')
+            executionDirectory: path.join(dir, `/duplicates`)
         };
 
         this.duplicateInfo = {
@@ -50,8 +52,12 @@ export class DuplicateFileProcessor implements IDuplicateFileProcessor {
         this.uniqueFiles = [];
         this.duplicateFiles = [];
         this.fileHashMap = {};
-        this.isScanComplete = false;
+        this._isScanComplete = false;
 
+    }
+
+    isScanComplete(): boolean {
+        return this._isScanComplete;
     }
 
     getDuplicateInfo(): IDuplicateInfo {
@@ -80,14 +86,14 @@ export class DuplicateFileProcessor implements IDuplicateFileProcessor {
     }
 
     getUniqueFiles(): string[] {
-        if (!this.isScanComplete) {
+        if (!this._isScanComplete) {
             throw new Error('File scan is not complete');
         }
         return this.uniqueFiles;
     }
 
     getDuplicateFiles(): string[] {
-        if (!this.isScanComplete) {
+        if (!this._isScanComplete) {
             throw new Error('File scan is not complete');
         }
         return this.duplicateFiles;
@@ -110,9 +116,18 @@ export class DuplicateFileProcessor implements IDuplicateFileProcessor {
     }
 
     startScan(): void {
-        this.isScanComplete = false;
+        this._isScanComplete = false;
         this.getAllFileDirents(this.processingOptions.scanDirectory).then(dirents => {
-            this.filesList = dirents.filter((dirent) => dirent.isFile()).map(dirent => dirent.name);
+            let files = dirents.filter((dirent) => dirent.isFile()).map(dirent => dirent.name);
+            this.filesList = [];
+            files.forEach((file, index) => {
+                this.filesList.push({
+                    id: index,
+                    name: file,
+                    isTooBig: fse.statSync(path.join(this.processingOptions.scanDirectory, file)).size > maxFileSize,
+                    isDuplicate: false
+                });
+            });
 
             if (this.filesList.length === 0) {
                 throw new Error('No files found in directory');
@@ -127,11 +142,11 @@ export class DuplicateFileProcessor implements IDuplicateFileProcessor {
     }
 
     startExecution(): void {
-        if (!this.isScanComplete) {
+        if (!this._isScanComplete) {
             throw new Error('File scan is not complete');
         }
 
-        this.executionInfo.fileTotalCount = this.duplicateInfo.fileTotalCount;
+        this.executionInfo.fileTotalCount = this.duplicateInfo.duplicatesCount;
 
         switch (this.processingOptions.executionType) {
             case ExecutionType.delete:
@@ -156,28 +171,36 @@ export class DuplicateFileProcessor implements IDuplicateFileProcessor {
     }
 
     private hashAndMap(): void {
-        this.filesList.forEach(file => {
-            let hash = crypto.createHash('sha1').update(fs.readFileSync(path.join(this.processingOptions.scanDirectory, file))).digest('base64');
+        this.filesList.forEach(fileInfo => {
+            if (fileInfo.isTooBig) {
+                console.log(`Skipped: ${fileInfo.name}\n`);
+            }
+            let hash = crypto.createHash('sha1').update(fse.readFileSync(path.join(this.processingOptions.scanDirectory, fileInfo.name))).digest('base64');
             if (this.fileHashMap[hash]) {
                 this.duplicateInfo.duplicatesCount++;
-                this.fileHashMap[hash] = [...this.fileHashMap[hash], file];
-                this.duplicateFiles.push(file);
+                this.fileHashMap[hash] = [...this.fileHashMap[hash], fileInfo.name];
+                //this.duplicateFiles.push(fileInfo.name);
             } else {
                 this.duplicateInfo.fileGroupCount++;
-                this.fileHashMap[hash] = [file];
-                this.uniqueFiles.push(file);
+                this.fileHashMap[hash] = [fileInfo.name];
+                //this.uniqueFiles.push(fileInfo.name);
             }
             this.duplicateInfo.fileCurrentCount++;
             this.triggerScanProgessSubscriber();
         });
         this.triggerScanProgessSubscriber(true);
-        this.isScanComplete = true;
+    }
+
+    private processFileHashMap(){
+
     }
 
     private triggerScanProgessSubscriber(complete: boolean = false) {
         if (!complete) {
             this.scanProgressSubscriber?.next(this.duplicateInfo);
         } else {
+            this._isScanComplete = true;
+            this.processFileHashMap();
             this.scanProgressSubscriber?.complete();
         }
     }
