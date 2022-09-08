@@ -173,7 +173,7 @@ export class DuplicateFileProcessor implements IDuplicateFileProcessor {
     private hashAndMap(): void {
         this.filesList.forEach(fileInfo => {
             if (fileInfo.isTooBig) {
-                console.log(`Skipped: ${fileInfo.name}\n`);
+                console.log(`\nSkipped big file: ${fileInfo.name}`);
             }
             let hash = crypto.createHash('sha1').update(fse.readFileSync(path.join(this.processingOptions.scanDirectory, fileInfo.name))).digest('base64');
             if (this.fileHashMap[hash]) {
